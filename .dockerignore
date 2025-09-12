@@ -1,0 +1,48 @@
+# Ignorar archivos y directorios innecesarios para Docker
+
+# Node modules
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Archivos de entorno
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+
+# Archivos de desarrollo
+.git
+.gitignore
+README.md
+LICENSE
+*.md
+
+# Archivos de configuración de desarrollo
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de build (se construirán en el contenedor)
+dist
+build
+
+# Archivos de test
+coverage
+.nyc_output
+
+# Archivos temporales
+tmp
+temp

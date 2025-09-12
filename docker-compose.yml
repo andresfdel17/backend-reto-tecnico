@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # Servicio MySQL
+  mysql:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    ports:
+      - "${DB_PORT}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # Servicio Node.js API
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodejs_api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: ${NODE_ENV}
+      APP_NAME: ${APP_NAME}
+      APP_URL: ${APP_URL}
+      PORT: ${PORT}
+      FRONT_DOMAIN: ${FRONT_DOMAIN}
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: ${DB_USER}
+      DB_PASS: ${DB_PASS}
+      DB_NAME: ${DB_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+      LOG_LEVEL: ${LOG_LEVEL}
+      LOG_TO_FILE: ${LOG_TO_FILE}
+      LOG_DIRECTORY: ${LOG_DIRECTORY}
+      LOG_MAX_SIZE: ${LOG_MAX_SIZE}
+      LOG_MAX_FILES: ${LOG_MAX_FILES}
+      APP_DEBUG: ${APP_DEBUG}
+    ports:
+      - "${PORT}:${PORT}"
+    volumes:
+      - ./logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app_network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge
