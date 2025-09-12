@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # Servicio MySQL
   mysql:
@@ -7,10 +5,10 @@ services:
     container_name: mysql_db
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${DB_NAME}
-      MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: "rootpass123"
+      MYSQL_DATABASE: "reto_tecnico"
+      MYSQL_USER: "reto_user"
+      MYSQL_PASSWORD: "userpass123"
       # Configuración adicional para seguridad
       MYSQL_RANDOM_ROOT_PASSWORD: "no"
       MYSQL_ONETIME_PASSWORD: "no"
@@ -41,9 +39,9 @@ services:
       FRONT_DOMAIN: ${FRONT_DOMAIN}
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USER: ${DB_USER}
-      DB_PASS: ${DB_PASS}
-      DB_NAME: ${DB_NAME}
+      DB_USER: "reto_user"
+      DB_PASS: "userpass123"
+      DB_NAME: "reto_tecnico"
       JWT_SECRET: ${JWT_SECRET}
       LOG_LEVEL: ${LOG_LEVEL}
       LOG_TO_FILE: ${LOG_TO_FILE}
@@ -69,9 +67,9 @@ services:
     environment:
       PMA_HOST: mysql
       PMA_PORT: 3306
-      PMA_USER: ${DB_USER}
-      PMA_PASSWORD: ${DB_PASS}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      PMA_USER: "reto_user"
+      PMA_PASSWORD: "userpass123"
+      MYSQL_ROOT_PASSWORD: "rootpass123"
     ports:
       - "8080:80"
     depends_on:
@@ -87,3 +85,4 @@ volumes:
 networks:
   app_network:
     driver: bridge
+    name: reto_tecnico_network

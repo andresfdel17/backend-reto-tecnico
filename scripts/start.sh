@@ -43,9 +43,9 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Limpiar contenedores anteriores si existen
-echo "🧹 Limpiando contenedores anteriores..."
-docker-compose down 2>/dev/null || true
+# Limpiar contenedores anteriores y volúmenes si existen
+echo "🧹 Limpiando contenedores anteriores y volúmenes..."
+docker-compose down -v 2>/dev/null || true
 
 # Levantar servicios
 echo "⬆️  Levantando servicios..."

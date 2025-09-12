@@ -15,6 +15,7 @@ Este comando:
 - ✅ Levanta la API en puerto personalizable (por defecto 3000)
 - ✅ Incluye phpMyAdmin para visualizar tablas y datos de BD
 - ✅ Importa automáticamente la estructura de BD
+- ✅ **Siempre recrea la BD limpia** (elimina volúmenes automáticamente)
 
 ## 🔗 URLs disponibles
 
@@ -34,16 +35,16 @@ Una vez desplegado:
 # Ver logs en tiempo real
 yarn docker:logs
 
-# Parar servicios
+# Parar servicios (elimina volúmenes automáticamente)
 yarn docker:stop
 
-# Reiniciar servicios
+# Reiniciar servicios (recrea todo limpio)
 yarn docker:restart
 
 # Verificar que todo funcione
 yarn verify-backend
 
-# Limpiar todo (elimina datos)
+# Limpiar todo + sistema Docker
 yarn docker:clean
 ```
 
@@ -54,6 +55,23 @@ Para desarrollo local sin Docker, configura tu archivo `.env` y ejecuta:
 ```bash
 yarn dev
 ```
+
+## 🌐 Comunicación con Frontend
+
+Este backend crea una **red Docker compartida** (`reto_tecnico_network`) que permite la comunicación con el frontend:
+
+```bash
+# 1. Levantar backend (crea la red)
+yarn setup-backend
+
+# 2. Levantar frontend (usa la red existente)
+cd ../frontend-reto-tecnico
+yarn setup-frontend
+```
+
+Los contenedores se pueden comunicar usando sus nombres:
+- Backend accesible como `backend` desde otros contenedores
+- MySQL accesible como `mysql` desde otros contenedores
 
 ## 📁 Estructura
 

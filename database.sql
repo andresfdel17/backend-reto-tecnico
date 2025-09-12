@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 12-09-2025 a las 20:17:32
+-- Tiempo de generación: 12-09-2025 a las 23:08:12
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.27
 
@@ -15,9 +15,6 @@ SET time_zone = "+00:00";
 -- Base de datos: `reto_tecnico`
 --
 
--- --------------------------------------------------------
--- Estructura de datos para la base de datos reto_tecnico
--- La base de datos ya fue creada en 01-init.sql
 -- --------------------------------------------------------
 
 --
@@ -57,7 +54,7 @@ CREATE TABLE `main_users` (
 --
 
 INSERT INTO `main_users` (`id`, `name`, `email`, `password`, `rol_id`) VALUES
-(1, 'Andrés Felipe Delgado', 'andresfdel13@gmail.com', '$2y$10$m1tCyWFHFcrJamIKUS1kLeF621XjPsF.X/vZNUncow2VbRrpA0lDa', 1);
+(1, 'Andres Felipe Delgado', 'andresfdel13@gmail.com', '$2y$10$m1tCyWFHFcrJamIKUS1kLeF621XjPsF.X/vZNUncow2VbRrpA0lDa', 1);
 
 --
 -- Índices para tablas volcadas
