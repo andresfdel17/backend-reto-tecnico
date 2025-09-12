@@ -28,7 +28,10 @@ Login.post('/login', authRateLimit, async (req: Request, res: Response) => {
         return;
     }
     const { email, password } = data;
-    const [rows] = await db.execute<RowDataPacket[]>('SELECT * FROM main_users WHERE email = ?', [email]);
+    const [rows] = await db.execute<RowDataPacket[]>(
+        `SELECT mu.*, mr.name as rol_name FROM main_users mu JOIN main_roles mr ON mu.rol_id = mr.id WHERE mu.email = ?`,
+        [email],
+    );
     const user: ILoginUser | null = (rows?.[0] as ILoginUser) ?? null;
     if (!user) {
         res.json({
@@ -37,7 +40,7 @@ Login.post('/login', authRateLimit, async (req: Request, res: Response) => {
         });
         return;
     }
-    const [validatePassword] = await Promise.all([PasswordManager.comparePassword(password, user?.password ?? '')]);
+    const validatePassword = await PasswordManager.comparePassword(password, user?.password ?? '');
     if (!validatePassword) {
         res.json({
             code: 400,
@@ -45,14 +48,11 @@ Login.post('/login', authRateLimit, async (req: Request, res: Response) => {
         });
         return;
     }
-    console.log(user);
-    const userJson = user?.toJSON();
-
-    const token = JWTManager.createToken<ILoginUser>({ ...userJson }, JWT_SECRET, req?.ip ?? '');
+    const token = JWTManager.createToken<ILoginUser>(user, JWT_SECRET, req?.ip ?? '');
     res.json({
         code: 200,
         token,
-        text: 'Sesión iniciada',
+        text: 'session-started',
     });
     return;
 });

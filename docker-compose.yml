@@ -11,11 +11,15 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
+      # Configuración adicional para seguridad
+      MYSQL_RANDOM_ROOT_PASSWORD: "no"
+      MYSQL_ONETIME_PASSWORD: "no"
     ports:
       - "${DB_PORT}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./database.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./init-database.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./database.sql:/docker-entrypoint-initdb.d/02-data.sql
     networks:
       - app_network
     healthcheck:
@@ -23,12 +27,11 @@ services:
       timeout: 20s
       retries: 10
 
-  # Servicio Node.js API
-  api:
+  reto-tecnico-backend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nodejs_api
+    container_name: backend_api
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV}
@@ -49,9 +52,28 @@ services:
       LOG_MAX_FILES: ${LOG_MAX_FILES}
       APP_DEBUG: ${APP_DEBUG}
     ports:
-      - "${PORT}:${PORT}"
+      - "${EXTERNAL_PORT:-3000}:${PORT}"
     volumes:
       - ./logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # phpMyAdmin para debugging de base de datos
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    ports:
+      - "8080:80"
     depends_on:
       mysql:
         condition: service_healthy

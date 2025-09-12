@@ -13,6 +13,7 @@ export interface ILoginUser {
     email: string;
     password: string;
     rol_id: number;
+    rol_name: Pick<IRol, 'name'>;
 }
 
 export interface IRol {

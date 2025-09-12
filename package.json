@@ -19,7 +19,15 @@
     "format": "prettier --write \"./src/**/*.ts\"",
     "lint": "eslint . --fix",
     "test": "NODE_ENV=test jest --color --verbose --no-cache --coverage --detectOpenHandles --forceExit",
-    "set-package-prod": "node --max-old-space-size=1024 set-package-prod.js"
+    "set-package-prod": "node --max-old-space-size=1024 set-package-prod.js",
+    "setup-backend": "./scripts/start.sh",
+    "verify-backend": "./scripts/verify-setup.sh",
+    "sync-env": "./scripts/sync-env-template.sh",
+    "docker:start": "./scripts/start.sh",
+    "docker:stop": "docker-compose down",
+    "docker:restart": "docker-compose restart",
+    "docker:logs": "docker-compose logs -f",
+    "docker:clean": "docker-compose down -v && docker system prune -f"
   },
   "license": "MIT",
   "private": true,
