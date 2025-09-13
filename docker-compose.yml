@@ -29,7 +29,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: backend_api
+    container_name: reto_api
     restart: unless-stopped
     environment:
       NODE_ENV: ${NODE_ENV}

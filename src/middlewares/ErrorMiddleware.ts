@@ -6,6 +6,7 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     // Log the error with context
     Logger.error('Unhandled application error', {
         error: err.message,
+        code: err.code,
         stack: err.stack,
         method: req.method,
         url: req.url,
@@ -14,12 +15,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     });
 
     // Debug console log in development/test
-    if (APP_DEBUG || NODE_ENV === 'testing') {
+    if (APP_DEBUG || NODE_ENV === 'development') {
         console.error({ err });
     }
-
+    // Error genérico
     res.status(200).json({
         code: 500,
-        text: 'Error de servidor',
+        text: 'server-error',
     });
 };

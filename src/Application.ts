@@ -1,6 +1,7 @@
 /* eslint-disable quotes */
 import 'reflect-metadata';
 import 'module-alias/register';
+import 'express-async-errors';
 import dotenv from 'dotenv';
 dotenv.config();
 import express from 'express';
@@ -108,10 +109,7 @@ const corsConfig: CorsOptions = {
 };
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
-// Rate limiting global
 app.use(generalRateLimit);
-
-// Development monitoring
 if (NODE_ENV === 'development' || NODE_ENV === 'testing') {
     app.use((req, res, next) => {
         const originalSend = res.send;
@@ -152,13 +150,11 @@ if (NODE_ENV === 'development' || NODE_ENV === 'testing') {
 }
 app.set('port', PORT || 3000);
 app.use(express.urlencoded({ extended: true, limit: '20mb' }));
-// parse requests of content-type - application/json
 app.use(express.json({ limit: '20mb' }));
 app.use('/public', express.static(path.join(__dirname, '../public')));
 app.use('/img', express.static(path.join(__dirname, './uploads')));
-//Manejo de errores
-app.use(errorHandler);
-//COntroladores
+
+//Controladores
 const route = (controller: string) => `/api/${controller}`;
 app.use(route('login'), Login);
 
@@ -169,3 +165,6 @@ app.get('/api/', (_req, res) => {
     });
     return;
 });
+
+//Manejo de errores - DEBE IR AL FINAL
+app.use(errorHandler);

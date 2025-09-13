@@ -17,21 +17,8 @@ if [ ! -f ".env.template" ]; then
     fi
 fi
 
-# Verificar si ya existe .env
-if [ -f ".env" ]; then
-    echo "⚠️  El archivo .env ya existe."
-    read -p "¿Deseas generar nuevas credenciales? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        echo "📝 Usando credenciales existentes"
-    else
-        echo "🔄 Generando nuevas credenciales..."
-        ./scripts/generate-env.sh
-    fi
-else
-    echo "🔐 Generando credenciales por primera vez..."
-    ./scripts/generate-env.sh
-fi
+echo "📝 Usando tu .env local existente (NO se modifica)"
+echo "🔒 Solo se cambiarán las credenciales de BD en Docker"
 
 echo ""
 echo "🐳 Iniciando servicios Docker..."
@@ -47,9 +34,9 @@ fi
 echo "🧹 Limpiando contenedores anteriores y volúmenes..."
 docker-compose down -v 2>/dev/null || true
 
-# Levantar servicios
-echo "⬆️  Levantando servicios..."
-docker-compose up -d
+# Levantar servicios (siempre reconstruir sin caché)
+echo "⬆️  Levantando servicios (reconstruyendo imagen sin caché)..."
+docker-compose up -d --build --force-recreate
 
 echo ""
 echo "⏳ Esperando a que los servicios estén listos..."

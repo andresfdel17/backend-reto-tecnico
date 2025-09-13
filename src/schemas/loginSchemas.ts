@@ -8,3 +8,9 @@ export const loginSchema = Joi.object({
 export const recoverPasswordSchema = Joi.object({
     email: Joi.string().email().required(),
 });
+
+export const registerSchema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.string().min(8).required(),
+    name: Joi.string().required(),
+}).unknown(true);

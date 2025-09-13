@@ -16,6 +16,7 @@ Este comando:
 - ✅ Incluye phpMyAdmin para visualizar tablas y datos de BD
 - ✅ Importa automáticamente la estructura de BD
 - ✅ **Siempre recrea la BD limpia** (elimina volúmenes automáticamente)
+- ✅ **Siempre reconstruye la imagen** (sin caché, código más reciente)
 
 ## 🔗 URLs disponibles
 

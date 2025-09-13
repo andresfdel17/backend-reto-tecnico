@@ -21,3 +21,10 @@ export interface IRol {
     code: number;
     name: string;
 }
+
+export interface IRegisterBody {
+    lang: string;
+    email: string;
+    password: string;
+    name: string;
+}

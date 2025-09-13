@@ -25,7 +25,8 @@
     "sync-env": "./scripts/sync-env-template.sh",
     "docker:start": "./scripts/start.sh",
     "docker:stop": "docker-compose down -v",
-    "docker:restart": "docker-compose down -v && docker-compose up -d",
+    "docker:restart": "docker-compose down -v && docker-compose up -d --build --force-recreate",
+    "docker:rebuild": "docker-compose build --no-cache && docker-compose up -d --force-recreate",
     "docker:logs": "docker-compose logs -f",
     "docker:clean": "docker-compose down -v && docker system prune -f"
   },
@@ -37,6 +38,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-async-errors": "^3.1.1",
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.1.0",
     "joi": "^17.13.3",

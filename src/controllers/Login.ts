@@ -4,8 +4,8 @@ export const Login = Router();
 //-- Importar tablas de conexion de bd
 import { db } from '@database';
 import { JWT_SECRET, validateData } from '@util';
-import { loginSchema } from '@schemas';
-import { ILoginBody, ILoginUser } from '@types';
+import { loginSchema, registerSchema } from '@schemas';
+import { ILoginBody, ILoginUser, IRegisterBody } from '@types';
 import { JWTManager, PasswordManager } from '@lib';
 import { RowDataPacket } from 'mysql2';
 
@@ -53,6 +53,43 @@ Login.post('/login', authRateLimit, async (req: Request, res: Response) => {
         code: 200,
         token,
         text: 'session-started',
+    });
+    return;
+});
+
+Login.post('/register', authRateLimit, async (req: Request, res: Response) => {
+    const { isError, error, data } = validateData<IRegisterBody>(registerSchema, req.body);
+    if (isError || !data) {
+        res.json({
+            code: 400,
+            text: error,
+        });
+        return;
+    }
+    const { email, name, password } = data;
+
+    const [rows] = await db.execute<RowDataPacket[]>(`SELECT 1 as user_exists FROM main_users WHERE email = ?;`, [
+        email,
+    ]);
+    const userExists = rows?.[0]?.user_exists ?? false;
+    if (userExists) {
+        res.json({
+            code: 400,
+            text: 'user-exists',
+        });
+        return;
+    }
+
+    const passwordHash = await PasswordManager.hashPassword(password);
+    await db.execute<RowDataPacket[]>(`INSERT INTO main_users (name,email, password, rol_id) VALUES (?,?, ?, ?);`, [
+        name,
+        email,
+        passwordHash,
+        2,
+    ]);
+    res.json({
+        code: 201,
+        text: 'user-created',
     });
     return;
 });
