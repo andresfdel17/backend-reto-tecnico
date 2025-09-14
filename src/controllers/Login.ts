@@ -8,6 +8,7 @@ import { loginSchema, registerSchema } from '@schemas';
 import { ILoginBody, ILoginUser, IRegisterBody } from '@types';
 import { JWTManager, PasswordManager } from '@lib';
 import { RowDataPacket } from 'mysql2';
+import { socketManager } from '../app';
 
 Login.get('/', (_req: Request, res: Response) => {
     res.json({
@@ -49,10 +50,16 @@ Login.post('/login', authRateLimit, async (req: Request, res: Response) => {
         return;
     }
     const token = JWTManager.createToken<ILoginUser>(user, JWT_SECRET, req?.ip ?? '');
+
     res.json({
         code: 200,
         token,
         text: 'session-started',
+        user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+        },
     });
     return;
 });
@@ -87,6 +94,14 @@ Login.post('/register', authRateLimit, async (req: Request, res: Response) => {
         passwordHash,
         2,
     ]);
+    // 🔌 Emitir evento de nuevo usuario registrado
+    socketManager.emitToAll('user-registered', {
+        message: 'new-user-registered',
+        userEmail: email,
+        userName: name,
+        timestamp: new Date().toISOString(),
+    });
+
     res.json({
         code: 201,
         text: 'user-created',

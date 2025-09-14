@@ -41,10 +41,7 @@ export class JWTManager {
      */
     static decodeToken<T = any>(token: string, ip: string): IPayload<T> | false {
         try {
-            const data = jwt.decode(token) as IPayload<T>;
-            if (!data?.aud?.includes(ip)) {
-                return false;
-            }
+            const data = jwt.verify(token, ip) as IPayload<T>;
             return data;
         } catch (error) {
             console.log({ errorJWTDecodeClass: error });

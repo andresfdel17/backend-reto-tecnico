@@ -1,5 +1,6 @@
 import { JWTManager } from '@lib';
-//import { ILoginUser } from '@types';
+import { JWT_SECRET } from '@util';
+import type { ILoginUser } from '@types';
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 
 export const getUserData: RequestHandler = (req: Request, res: Response, next: NextFunction) => {
@@ -9,7 +10,7 @@ export const getUserData: RequestHandler = (req: Request, res: Response, next: N
         res.json({ code: 401, text: 'Unauthorized' });
         return;
     }
-    const data = JWTManager.decodeToken(token ?? '', req?.ip ?? '');
+    const data = JWTManager.decodeToken(token ?? '', JWT_SECRET);
     if (!data) {
         res.json({ code: 401, text: 'Unauthorized' });
         return;
@@ -19,6 +20,6 @@ export const getUserData: RequestHandler = (req: Request, res: Response, next: N
         res.json({ code: 401, text: 'Unauthorized' });
         return;
     }
-    //req.actualUser = user;
+    req.actualUser = user as ILoginUser;
     next();
 };
