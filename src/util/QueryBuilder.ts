@@ -179,7 +179,7 @@ export class QueryBuilder {
     static addPagination(baseQuery: string, page: number = 1, limit: number = 20): { query: string; params: any[] } {
         const offset = (page - 1) * limit;
         const query = `${baseQuery} LIMIT ? OFFSET ?`;
-        const params = [limit, offset];
+        const params = [limit?.toString(), offset?.toString()];
         return { query, params };
     }
 
