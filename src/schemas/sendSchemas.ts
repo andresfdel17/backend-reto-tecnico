@@ -10,9 +10,12 @@ export const getSendsFilteredSchema = Joi.object({
 export const createSendSchema = Joi.object({
     reference: Joi.string().required(),
     address: Joi.string().required(),
-    width: Joi.number().required(),
-    height: Joi.number().required(),
-    length: Joi.number().required(),
+    width: Joi.number().positive().required(),
+    height: Joi.number().positive().required(),
+    length: Joi.number().positive().required(),
+    units: Joi.number().integer().positive().optional(),
+    route_id: Joi.number().integer().positive().optional(),
+    driver_id: Joi.number().integer().positive().optional(),
 }).unknown(true);
 
 export const updateSendSchema = Joi.object({

@@ -5,7 +5,7 @@ export const Sends = Router();
 import { db } from '@database';
 import { validateData } from '@util';
 import { createSendSchema, getSendsFilteredSchema, updateSendSchema } from '@schemas';
-import { ISendCreatebody, ISendGetFilteredbody, ISendUpdateBody } from '@types';
+import { ISendCreateBody, ISendGetFilteredBody, ISendUpdateBody } from '@types';
 import { RowDataPacket } from 'mysql2';
 import moment from 'moment-timezone';
 import { socketManager } from '../app';
@@ -19,7 +19,7 @@ Sends.get('/', (_req: Request, res: Response) => {
 });
 
 Sends.post('/getSendsFiltered', [getUserData, modifyDataRateLimit], async (req: Request, res: Response) => {
-    const { isError, error, data } = validateData<ISendGetFilteredbody>(getSendsFilteredSchema, req.body);
+    const { isError, error, data } = validateData<ISendGetFilteredBody>(getSendsFilteredSchema, req.body);
     if (isError || !data) {
         res.json({
             code: 400,
@@ -99,7 +99,7 @@ Sends.post('/getSendsFiltered', [getUserData, modifyDataRateLimit], async (req: 
 });
 
 Sends.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, res: Response) => {
-    const { isError, error, data } = validateData<ISendCreatebody>(createSendSchema, req.body);
+    const { isError, error, data } = validateData<ISendCreateBody>(createSendSchema, req.body);
     if (isError || !data) {
         res.json({
             code: 400,
@@ -107,6 +107,90 @@ Sends.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, r
         });
         return;
     }
+    // VALIDACIONES DE NEGOCIO PARA CREACIÓN
+
+    // Validar capacidad del vehículo si se está asignando una ruta
+    if (data.route_id !== undefined && data.route_id !== null) {
+        const vehicleQuery = `
+            SELECT v.capacity, v.brand, v.code
+            FROM main_routes r
+            LEFT JOIN main_vehicles v ON r.vehicle_id = v.id
+            WHERE r.id = ?
+        `;
+        const [vehicleRows] = await db.execute<RowDataPacket[]>(vehicleQuery, [data.route_id]);
+
+        if (vehicleRows.length === 0) {
+            res.json({
+                code: 400,
+                text: 'route-not-found',
+            });
+            return;
+        }
+
+        const vehicle = vehicleRows[0];
+        if (!vehicle.capacity) {
+            res.json({
+                code: 400,
+                text: 'route-has-no-vehicle-assigned',
+            });
+            return;
+        }
+
+        // Verificar capacidad vs unidades del envío (por defecto 1)
+        const sendUnits = data.units || 1;
+        if (sendUnits > vehicle.capacity) {
+            res.json({
+                code: 400,
+                text: 'vehicle-capacity-exceeded',
+                data: {
+                    vehicleCapacity: vehicle.capacity,
+                    sendUnits: sendUnits,
+                    vehicleBrand: vehicle.brand,
+                    vehicleCode: vehicle.code,
+                },
+            });
+            return;
+        }
+    }
+
+    // Validar disponibilidad del conductor si se está asignando
+    if (data.driver_id !== undefined && data.driver_id !== null) {
+        const driverAvailabilityQuery = `
+            SELECT ms.id, ms.unique_id, ms.reference, d.name as driver_name
+            FROM main_sends ms
+            JOIN main_drivers d ON ms.driver_id = d.id
+            WHERE ms.driver_id = ? 
+            AND ms.state IN (1, 2)
+        `;
+        const [driverRows] = await db.execute<RowDataPacket[]>(driverAvailabilityQuery, [data.driver_id]);
+
+        if (driverRows.length > 0) {
+            const conflictingSend = driverRows[0];
+            res.json({
+                code: 400,
+                text: 'driver-not-available',
+                data: {
+                    driverName: conflictingSend.driver_name,
+                    conflictingSendId: conflictingSend.unique_id,
+                    conflictingSendReference: conflictingSend.reference,
+                },
+            });
+            return;
+        }
+
+        // Verificar que el conductor existe
+        const driverExistsQuery = `SELECT id, name FROM main_drivers WHERE id = ?`;
+        const [driverExistsRows] = await db.execute<RowDataPacket[]>(driverExistsQuery, [data.driver_id]);
+
+        if (driverExistsRows.length === 0) {
+            res.json({
+                code: 400,
+                text: 'driver-not-found',
+            });
+            return;
+        }
+    }
+
     const saveData = {
         ...data,
         unique_id: Date.now(),
@@ -149,14 +233,16 @@ Sends.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, r
         ...saveData,
     };
 
-    // Enviar notificación por socket a todos los usuarios conectados
-    socketManager.emitToUser(req.actualUser?.email || '', 'new-send-notification', {
-        message: 'new-send-notification',
-        unique_id: newSendData.unique_id,
-        username: req.actualUser?.name || 'Usuario',
-        timestamp: new Date().toISOString(),
-        createdBy: req.actualUser?.name || 'Usuario',
-    });
+    // Enviar notificación por socket al usuario propietario del envío
+    if (req.actualUser?.email) {
+        socketManager.emitToUser(req.actualUser.email, 'new-send-notification', {
+            message: 'new-send-notification',
+            unique_id: newSendData.unique_id,
+            username: req.actualUser.name || 'Usuario',
+            timestamp: new Date().toISOString(),
+            createdBy: req.actualUser.name || 'Usuario',
+        });
+    }
 
     res.json({
         code: 200,
@@ -200,9 +286,99 @@ Sends.put('/update/:id', [getUserData, modifyDataRateLimit], async (req: Request
         });
         return;
     }
+
+    if (data.route_id !== undefined && data.route_id !== null) {
+        const vehicleQuery = `
+            SELECT v.capacity, v.brand, v.code
+            FROM main_routes r
+            LEFT JOIN main_vehicles v ON r.vehicle_id = v.id
+            WHERE r.id = ?
+        `;
+        const [vehicleRows] = await db.execute<RowDataPacket[]>(vehicleQuery, [data.route_id]);
+
+        if (vehicleRows.length === 0) {
+            res.json({
+                code: 400,
+                text: 'route-not-found',
+            });
+            return;
+        }
+
+        const vehicle = vehicleRows[0];
+        if (!vehicle) {
+            res.json({
+                code: 400,
+                text: 'route-has-no-vehicle-assigned',
+            });
+            return;
+        }
+
+        const sendUnits = data.units || existingSend.units || 1;
+        if (sendUnits > vehicle.capacity) {
+            res.json({
+                code: 400,
+                text: 'vehicle-capacity-exceeded',
+                data: {
+                    vehicleCapacity: vehicle.capacity,
+                    sendUnits: sendUnits,
+                    vehicleBrand: vehicle.brand,
+                    vehicleCode: vehicle.code,
+                },
+            });
+            return;
+        }
+    }
+
+    // Validar disponibilidad del conductor si se está asignando
+    if (data.driver_id !== undefined && data.driver_id !== null) {
+        const driverAvailabilityQuery = `
+            SELECT ms.id, ms.unique_id, ms.reference, d.name as driver_name
+            FROM main_sends ms
+            JOIN main_drivers d ON ms.driver_id = d.id
+            WHERE ms.driver_id = ? 
+            AND ms.id != ? 
+            AND ms.state IN (1, 2)
+        `;
+        const [driverRows] = await db.execute<RowDataPacket[]>(driverAvailabilityQuery, [data.driver_id, sendId]);
+
+        if (driverRows.length > 0) {
+            const conflictingSend = driverRows[0];
+            res.json({
+                code: 400,
+                text: 'driver-not-available',
+                data: {
+                    driverName: conflictingSend.driver_name,
+                    conflictingSendId: conflictingSend.unique_id,
+                    conflictingSendReference: conflictingSend.reference,
+                },
+            });
+            return;
+        }
+
+        // Verificar que el conductor existe
+        const driverExistsQuery = `SELECT id, name FROM main_drivers WHERE id = ?`;
+        const [driverExistsRows] = await db.execute<RowDataPacket[]>(driverExistsQuery, [data.driver_id]);
+
+        if (driverExistsRows.length === 0) {
+            res.json({
+                code: 400,
+                text: 'driver-not-found',
+            });
+            return;
+        }
+    }
     const fieldsToUpdate: string[] = [];
     const updateParams: any[] = [];
     const currentTimestamp = moment().tz('America/Bogota').format('YYYY-MM-DD HH:mm:ss');
+
+    const isAssigningDriverOrRoute =
+        (data.driver_id !== undefined || data.route_id !== undefined) && existingSend.state === 1;
+    let finalState = data.state;
+    if (isAssigningDriverOrRoute && data.state === undefined) {
+        finalState = 2; // Cambiar automáticamente a "en tránsito"
+        fieldsToUpdate.push('state = ?');
+        updateParams.push(finalState);
+    }
     const simpleFields = ['reference', 'address', 'width', 'height', 'length', 'units', 'route_id', 'driver_id'];
     simpleFields.forEach((field) => {
         if (data[field as keyof ISendUpdateBody] !== undefined) {
@@ -210,20 +386,29 @@ Sends.put('/update/:id', [getUserData, modifyDataRateLimit], async (req: Request
             updateParams.push(data[field as keyof ISendUpdateBody]);
         }
     });
+
+    // Manejar el campo state si viene explícitamente
     if (data.state !== undefined) {
         fieldsToUpdate.push('state = ?');
         updateParams.push(data.state);
+        finalState = data.state;
+    }
+
+    // Manejar timestamps automáticos según el estado final
+    if (finalState !== undefined) {
         const stateTimestamps: Record<number, string> = {
             2: 'transit_datetime', // En tránsito
             3: 'deliver_datetime', // Entregado
             // Estado 4 (cancelado) no tiene timestamp específico en la BD
         };
 
-        if (stateTimestamps[data.state]) {
-            fieldsToUpdate.push(`${stateTimestamps[data.state]} = ?`);
+        if (stateTimestamps[finalState]) {
+            fieldsToUpdate.push(`${stateTimestamps[finalState]} = ?`);
             updateParams.push(currentTimestamp);
         }
     }
+
+    // Verificar que hay al menos un campo para actualizar
     if (fieldsToUpdate.length === 0) {
         res.json({
             code: 400,
@@ -231,20 +416,33 @@ Sends.put('/update/:id', [getUserData, modifyDataRateLimit], async (req: Request
         });
         return;
     }
+
+    // Ejecutar actualización
     updateParams.push(sendId);
     const updateQuery = `UPDATE main_sends SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
     await db.execute(updateQuery, updateParams);
+
+    // Obtener datos actualizados
     const [updatedRows] = await db.execute<RowDataPacket[]>(checkQuery, [sendId]);
     const updatedSend = updatedRows[0];
-    // Enviar notificación por socket
-    const notificationData = {
-        message: 'send-updated-notification',
-        unique_id: updatedSend.unique_id,
-        newState: data.state,
-        username: req.actualUser?.name || 'Usuario',
-        timestamp: new Date().toISOString(),
-    };
-    socketManager.emitToUser(req.actualUser?.email || '', 'send-updated-notification', notificationData);
+
+    // Obtener email del usuario propietario del envío
+    const ownerQuery = `SELECT email, name FROM main_users WHERE id = ?`;
+    const [ownerRows] = await db.execute<RowDataPacket[]>(ownerQuery, [updatedSend.user_id]);
+    const ownerEmail = ownerRows.length > 0 ? ownerRows[0].email : '';
+    const ownerName = ownerRows.length > 0 ? ownerRows[0].name : 'Usuario';
+
+    // Enviar notificación al propietario del envío
+    if (ownerEmail) {
+        socketManager.emitToUser(ownerEmail, 'send-updated-notification', {
+            newState: finalState,
+            unique_id: updatedSend.unique_id,
+            username: ownerName,
+            updatedBy: req.actualUser?.name || 'Usuario',
+            timestamp: new Date().toISOString(),
+        });
+    }
+
     res.json({
         code: 200,
         data: updatedSend,

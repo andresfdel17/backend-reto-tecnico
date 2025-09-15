@@ -4,7 +4,7 @@ export const VERSION = process.env.npm_package_version ?? 'N/A';
 export const PACKAGE_NAME = process.env.npm_package_name ?? 'N/A';
 export const APP_URL = process.env.APP_URL ?? 'http://localhost:3000';
 export const PORT = process.env.PORT ?? '3000';
-export const FRONT_DOMAIN = process.env.FRONT_DOMAIN ?? 'http://localhost:3000';
+export const FRONT_DOMAIN = process.env.FRONT_DOMAIN ?? 'http://localhost:3001';
 //Base de datos
 export const DB_HOST = process.env.DB_HOST ?? 'localhost';
 export const DB_PORT = process.env.DB_PORT ?? '3306';

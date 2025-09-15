@@ -12,7 +12,7 @@ import path from 'node:path';
 import { PORT, NODE_ENV, FRONT_DOMAIN } from '@util';
 import { errorHandler, generalRateLimit } from '@middlewares';
 import { Logger } from '@lib';
-import { Login, Notifications, Sends, Users } from '@controllers';
+import { General, Login, Notifications, Sends, Users } from '@controllers';
 
 export const app = express();
 
@@ -160,6 +160,7 @@ app.use(route('login'), Login);
 app.use(route('notifications'), Notifications);
 app.use(route('sends'), Sends);
 app.use(route('users'), Users);
+app.use(route('general'), General);
 
 app.get('/api/', (_req, res) => {
     res.json({

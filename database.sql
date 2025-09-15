@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 14-09-2025 a las 21:50:50
+-- Tiempo de generación: 15-09-2025 a las 21:00:19
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.27
 
@@ -91,7 +91,7 @@ CREATE TABLE `main_sends` (
   `reference` varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
   `address` varchar(255) COLLATE utf8mb4_general_ci DEFAULT NULL,
   `units` int DEFAULT NULL,
-  `state` int DEFAULT NULL COMMENT '1-En espera,2-en tránsito,3-Entregado',
+  `state` int DEFAULT NULL COMMENT '1-En espera,2-en tránsito,3-Entregado,4-cancelado',
   `create_datetime` datetime DEFAULT NULL,
   `transit_datetime` datetime DEFAULT NULL,
   `deliver_datetime` datetime DEFAULT NULL,
@@ -107,7 +107,7 @@ CREATE TABLE `main_sends` (
 INSERT INTO `main_sends` (`id`, `user_id`, `unique_id`, `route_id`, `driver_id`, `reference`, `address`, `units`, `state`, `create_datetime`, `transit_datetime`, `deliver_datetime`, `width`, `height`, `length`) VALUES
 (1, 2, '12345678', NULL, NULL, 'TEST', 'Callee busquela con cra encuentrela', 1, 1, '2025-09-13 19:11:36', NULL, NULL, NULL, NULL, NULL),
 (14, 1, '1757886110943', NULL, NULL, 'saldnslad', 'Cll 30 # 30  - 50 Armenia', 1, 1, '2025-09-14 16:41:50', NULL, NULL, 10, 10, 10),
-(15, 2, '1757886190142', NULL, NULL, 'sadsdasd', 'Cll 30 # 50 - 30 Armenia', 1, 1, '2025-09-14 16:43:10', NULL, NULL, 10, 10, 10);
+(15, 2, '1757886190142', NULL, NULL, 'sadsdasd', 'Cll 30 # 50 - 30 Armenia', 1, 4, '2025-09-14 16:43:10', NULL, NULL, 10, 10, 10);
 
 -- --------------------------------------------------------
 
