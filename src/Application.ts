@@ -13,6 +13,7 @@ import { PORT, NODE_ENV, FRONT_DOMAIN } from '@util';
 import { errorHandler, generalRateLimit } from '@middlewares';
 import { Logger } from '@lib';
 import { General, Login, Notifications, Sends, Users, Drivers, Home } from '@controllers';
+import { setupSwagger } from './swagger';
 
 export const app = express();
 
@@ -26,9 +27,10 @@ const developmentCSP = {
             '127.0.0.1:*',
             'https://cdn.jsdelivr.net',
             'https://fonts.googleapis.com',
+            'https://unpkg.com',
         ],
         fontSrc: ["'self'", 'localhost:*', '127.0.0.1:*', 'https://fonts.gstatic.com', 'https://cdn.jsdelivr.net'],
-        scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'", 'localhost:*', '127.0.0.1:*'],
+        scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'", 'localhost:*', '127.0.0.1:*', 'https://unpkg.com'],
         imgSrc: ["'self'", 'data:', 'blob:', 'localhost:*', '127.0.0.1:*', 'https:'],
         connectSrc: [
             "'self'",
@@ -171,6 +173,9 @@ app.get('/api/', (_req, res) => {
     });
     return;
 });
+
+// Configurar Swagger (disponible en todos los entornos)
+setupSwagger(app);
 
 //Manejo de errores - DEBE IR AL FINAL
 app.use(errorHandler);

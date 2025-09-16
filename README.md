@@ -9,6 +9,12 @@ API backend desarrollada en Node.js con TypeScript, MySQL y Docker.
 yarn setup-backend
 ```
 
+**🎯 URLs finales**:
+- **Frontend**: http://localhost:3001
+- **Backend API**: http://localhost:3000/api  
+- **Swagger**: http://localhost:3000/api-docs
+- **phpMyAdmin**: http://localhost:8080
+
 Este comando:
 - ✅ Configura credenciales de BD aleatorias por seguridad
 - ✅ Levanta MySQL en puerto 3307 (sin conflictos con MySQL local)
@@ -23,6 +29,7 @@ Este comando:
 Una vez desplegado:
 
 - **API**: http://localhost:3000
+- **📚 Documentación Swagger**: http://localhost:3000/api-docs
 - **phpMyAdmin**: http://localhost:8080 (interfaz para visualizar tablas y datos de BD)
 - **MySQL**: localhost:3307
 
@@ -73,6 +80,75 @@ yarn setup-frontend
 Los contenedores se pueden comunicar usando sus nombres:
 - Backend accesible como `backend` desde otros contenedores
 - MySQL accesible como `mysql` desde otros contenedores
+
+## 📚 Documentación API con Swagger
+
+La API incluye documentación interactiva completa usando **Swagger UI** con **OpenAPI 3.0**.
+
+### 🌐 **Acceso a la documentación**
+
+Una vez que el servidor esté corriendo:
+
+**🔗 URL**: http://localhost:3000/api-docs
+
+### ✨ **Características de la documentación**
+
+- **📖 Documentación completa** de todos los endpoints
+- **🔐 Autenticación JWT integrada** - Prueba endpoints autenticados
+- **📝 Ejemplos de solicitudes y respuestas** para cada endpoint
+- **🎯 Esquemas de datos detallados** con validaciones
+- **🏷️ Organizados por categorías**: Autenticación, Envíos, Dashboard, etc.
+- **🧪 Interfaz interactiva** - Ejecuta llamadas a la API directamente
+- **📱 Responsive** - Funciona en dispositivos móviles
+
+### 🔑 **Cómo usar la autenticación en Swagger**
+
+1. **Obtener token**: Usa el endpoint `POST /login/login` con credenciales válidas
+2. **Autorizar**: Clic en el botón "🔒 Authorize" en la parte superior
+3. **Ingresar token**: Pega el token JWT (sin "Bearer", solo el token)
+4. **Probar endpoints**: Ahora puedes ejecutar endpoints autenticados
+
+### 📋 **Credenciales de prueba**
+
+#### **👤 Administrador**:
+```json
+{
+  "email": "a@mail.com",
+  "password": "123456"
+}
+```
+
+#### **👤 Usuario Regular**:
+```json
+{
+  "email": "afd@mail.com", 
+  "password": "12345678"
+}
+```
+
+### 🏷️ **Categorías de endpoints documentados**
+
+- **🔐 Autenticación**: Login, registro, tokens JWT
+- **📊 Dashboard**: Gráficas, métricas, analytics
+- **📦 Envíos**: CRUD completo de envíos
+- **🔍 Tracking**: Rastreo público y privado
+- **🚛 Conductores**: Gestión de conductores (admin)
+- **👥 Usuarios**: Gestión de usuarios del sistema
+- **🔔 Notificaciones**: Sistema de notificaciones en tiempo real
+
+### 🛠️ **Esquemas principales**
+
+- **Send**: Estructura completa de envíos
+- **Driver**: Información de conductores
+- **User**: Datos de usuarios
+- **ChartData**: Datos para gráficas del dashboard
+- **AuthResponse**: Respuesta de autenticación
+- **ErrorResponse**: Formato estándar de errores
+
+### 📄 **Endpoints JSON**
+
+- **Swagger JSON**: http://localhost:3000/api-docs.json
+- **OpenAPI 3.0** compatible con herramientas como Postman, Insomnia
 
 ## 📊 API de Gráficos y Analytics
 

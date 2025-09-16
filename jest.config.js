@@ -3,7 +3,14 @@ module.exports = {
     testEnvironment: 'node',
     testMatch: ['**/*.steps.ts', '**/*.test.ts'],
     setupFilesAfterEnv: ['<rootDir>/test/setup.ts'],
-    collectCoverageFrom: ['src/**/*.ts', '!src/**/*.d.ts', '!src/index.ts', '!src/app.ts'],
+    collectCoverageFrom: [
+        'src/**/*.ts',
+        '!src/**/*.d.ts',
+        '!src/index.ts',
+        '!src/app.ts',
+        '!src/@types/**',
+        '!src/lib/**',
+    ],
     coverageDirectory: './coverage/',
     collectCoverage: true,
     moduleNameMapper: {

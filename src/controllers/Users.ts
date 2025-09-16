@@ -15,6 +15,15 @@ Users.get('/', (_req: Request, res: Response) => {
 });
 
 Users.get('/getAllUsers', [getUserData, modifyDataRateLimit], async (req: Request, res: Response) => {
+    // Validar que el usuario sea administrador
+    if (req.actualUser?.rol_id !== 1) {
+        res.json({
+            code: 403,
+            text: 'insufficient-permissions',
+        });
+        return;
+    }
+
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
 
