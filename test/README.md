@@ -8,32 +8,6 @@ Este directorio contiene todas las pruebas unitarias y de integración para los 
 ```bash
 yarn test
 ```
-
-### Ejecutar tests específicos
-```bash
-# Solo tests de Login
-yarn test --testNamePattern="Login Controller"
-
-# Solo tests de Sends
-yarn test --testNamePattern="Sends Controller"
-
-# Solo tests de General (routes, drivers)
-yarn test --testNamePattern="General Controller"
-
-# Solo tests de Users
-yarn test --testNamePattern="Users Controller"
-```
-
-### Ejecutar tests con watch mode (desarrollo)
-```bash
-yarn test --watch
-```
-
-### Ejecutar tests sin coverage
-```bash
-yarn test --coverage=false
-```
-
 ## 📁 **Estructura de Tests**
 
 ```
@@ -150,6 +124,18 @@ Los tests utilizan datos basados en `database.sql`:
 - Parámetros personalizados
 - Manejo de valores inválidos
 - Cálculo correcto de páginas totales
+
+### Gráficos y Analytics:
+- **Charts Data API** (`/home/charts-data`):
+  - Períodos configurables (7, 15, 30 días)
+  - Filtrado por usuario para administradores
+  - Inclusión del día actual en rangos
+  - Datos agrupados por fecha y estado
+  - Estadísticas agregadas por estado
+- **Filtrado por rol**:
+  - Admin: Acceso a todos los datos
+  - Usuario normal: Solo sus propios envíos
+- **Estructura de respuesta** optimizada para Chart.js
 
 ## 🚨 **Errores Comunes y Soluciones**
 

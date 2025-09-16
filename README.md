@@ -74,6 +74,64 @@ Los contenedores se pueden comunicar usando sus nombres:
 - Backend accesible como `backend` desde otros contenedores
 - MySQL accesible como `mysql` desde otros contenedores
 
+## 📊 API de Gráficos y Analytics
+
+### Endpoint de Datos para Gráficos
+```http
+GET /api/home/charts-data?period=7&user_id=2
+```
+
+**Parámetros:**
+- `period` (opcional): Número de días a incluir (7, 15, 30). Por defecto: 7
+- `user_id` (opcional, solo admin): ID del usuario específico a filtrar
+
+**Respuesta:**
+```json
+{
+  "code": 200,
+  "data": {
+    "chartData": {
+      "labels": ["1/1/2024", "2/1/2024", ...],
+      "datasets": [
+        {
+          "label": "Creados",
+          "data": [5, 3, 8, ...],
+          "borderColor": "#007bff"
+        },
+        {
+          "label": "En Tránsito", 
+          "data": [2, 4, 6, ...],
+          "borderColor": "#ffc107"
+        }
+      ]
+    },
+    "stats": {
+      "created": 45,
+      "inTransit": 12,
+      "delivered": 28,
+      "cancelled": 3,
+      "total": 88
+    },
+    "period": 7,
+    "dateRange": {
+      "start": "2024-01-01",
+      "end": "2024-01-07"
+    },
+    "filters": {
+      "user_id": 2,
+      "isAdmin": true
+    }
+  }
+}
+```
+
+**Características:**
+- ✅ **Incluye día actual** en el rango de fechas
+- ✅ **Filtrado por rol**: Usuarios normales ven solo sus datos
+- ✅ **Filtro de usuario para admin**: Parámetro `user_id` opcional
+- ✅ **Datos listos para Chart.js**: Formato optimizado para gráficos
+- ✅ **Estadísticas agregadas**: Totales por estado de envío
+
 ## 🧪 Testing
 
 El proyecto incluye un sistema completo de pruebas unitarias con Jest y Supertest.

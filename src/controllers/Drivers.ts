@@ -17,7 +17,6 @@ Drivers.get('/', (_req: Request, res: Response) => {
     return;
 });
 
-// GET /drivers - Obtener todos los conductores (autenticado)
 Drivers.get('/drivers', [getUserData, modifyDataRateLimit], async (_req: Request, res: Response) => {
     // Query para obtener todos los conductores
     const driversQuery = `
@@ -47,7 +46,6 @@ Drivers.get('/drivers', [getUserData, modifyDataRateLimit], async (_req: Request
     return;
 });
 
-// POST /drivers - Crear un nuevo conductor (autenticado)
 Drivers.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, res: Response) => {
     // Validar datos de entrada
     const { isError, error, data } = validateData(createDriverSchema, req.body);

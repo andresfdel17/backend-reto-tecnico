@@ -3,6 +3,7 @@ import { getUserData, modifyDataRateLimit } from '@middlewares';
 import { db } from '@database';
 import { ISend } from '@types';
 import { RowDataPacket } from 'mysql2';
+import moment from 'moment-timezone';
 
 export const Home = Router();
 
@@ -254,6 +255,281 @@ Home.get('/tracking-auth/:unique_id', [getUserData, modifyDataRateLimit], async 
         return;
     } catch (error) {
         console.error('Error in authenticated tracking endpoint:', error);
+        res.json({
+            code: 500,
+            message: 'internal-server-error',
+        });
+        return;
+    }
+});
+
+// GET /home/charts-data - Endpoint para obtener datos de gráficas
+Home.get('/charts-data', [getUserData, modifyDataRateLimit], async (req: Request, res: Response) => {
+    try {
+        const user = req.actualUser;
+        const { period = '7', user_id } = req.query; // Período en días y filtro de usuario
+        const periodDays = parseInt(period as string) || 7;
+        // Configurar timezone (ajustar según tu zona horaria)
+        const timezone = 'America/Bogota'; // Cambia según tu ubicación
+
+        // Calcular fechas usando moment-timezone
+        const endDate = moment().tz(timezone).startOf('day');
+        const startDate = moment(endDate).subtract(periodDays - 1, 'days');
+
+        // Formatear fechas para MySQL
+        const startDateStr = startDate.format('YYYY-MM-DD');
+        const endDateStr = endDate.format('YYYY-MM-DD');
+
+        // Query simplificada - obtener datos por estado y fecha correspondiente (como texto)
+        let chartsQuery = `
+            SELECT 
+                DATE_FORMAT(create_datetime, '%Y-%m-%d') as date,
+                1 as state,
+                COUNT(*) as count
+            FROM main_sends 
+            WHERE state = 1 AND DATE(create_datetime) BETWEEN ? AND ?
+            GROUP BY create_datetime
+            
+            UNION ALL
+            
+            SELECT 
+                DATE_FORMAT(transit_datetime, '%Y-%m-%d') as date,
+                2 as state,
+                COUNT(*) as count
+            FROM main_sends 
+            WHERE state = 2 AND transit_datetime IS NOT NULL 
+            AND DATE(transit_datetime) BETWEEN ? AND ?
+            GROUP BY transit_datetime
+            
+            UNION ALL
+            
+            SELECT 
+                DATE_FORMAT(deliver_datetime, '%Y-%m-%d') as date,
+                3 as state,
+                COUNT(*) as count
+            FROM main_sends 
+            WHERE state = 3 AND deliver_datetime IS NOT NULL 
+            AND DATE(deliver_datetime) BETWEEN ? AND ?
+            GROUP BY deliver_datetime
+            
+            UNION ALL
+            
+            SELECT 
+                DATE_FORMAT(create_datetime, '%Y-%m-%d') as date,
+                4 as state,
+                COUNT(*) as count
+            FROM main_sends 
+            WHERE state = 4 AND DATE(create_datetime) BETWEEN ? AND ?
+            GROUP BY create_datetime
+        `;
+
+        // Parámetros para las fechas (8 parámetros: startDate y endDate para cada estado)
+        const queryParams: any[] = [
+            startDateStr,
+            endDateStr, // Para estado 1 (En espera)
+            startDateStr,
+            endDateStr, // Para estado 2 (En tránsito)
+            startDateStr,
+            endDateStr, // Para estado 3 (Entregado)
+            startDateStr,
+            endDateStr, // Para estado 4 (Cancelado)
+        ];
+
+        // Agregar filtrado por usuario a cada parte del UNION
+        let userFilter = '';
+        let userFilterParams: any[] = [];
+
+        if (user?.rol_id !== 1) {
+            // Usuario normal: solo sus envíos
+            userFilter = ' AND user_id = ?';
+            userFilterParams = [user?.id, user?.id, user?.id, user?.id];
+        } else if (user_id) {
+            // Admin con filtro específico de usuario
+            const targetUserId = parseInt(user_id as string);
+            if (targetUserId && !isNaN(targetUserId)) {
+                userFilter = ' AND user_id = ?';
+                userFilterParams = [targetUserId, targetUserId, targetUserId, targetUserId];
+            }
+        }
+
+        // Aplicar filtro de usuario a cada parte del UNION si es necesario
+        if (userFilter) {
+            chartsQuery = chartsQuery.replace(/WHERE state = 1 AND/g, `WHERE state = 1 AND user_id = ? AND`);
+            chartsQuery = chartsQuery.replace(/WHERE state = 2 AND/g, `WHERE state = 2 AND user_id = ? AND`);
+            chartsQuery = chartsQuery.replace(/WHERE state = 3 AND/g, `WHERE state = 3 AND user_id = ? AND`);
+            chartsQuery = chartsQuery.replace(/WHERE state = 4 AND/g, `WHERE state = 4 AND user_id = ? AND`);
+
+            // Insertar parámetros de usuario en las posiciones correctas
+            const finalParams: any[] = [];
+            for (let i = 0; i < 4; i++) {
+                if (userFilterParams.length > 0) {
+                    finalParams.push(userFilterParams[i]);
+                }
+                finalParams.push(queryParams[i * 2]); // startDate
+                finalParams.push(queryParams[i * 2 + 1]); // endDate
+            }
+            queryParams.splice(0, queryParams.length, ...finalParams);
+        }
+
+        chartsQuery += ' ORDER BY date ASC, state ASC';
+        const [rows] = await db.execute<RowDataPacket[]>(chartsQuery, queryParams);
+        // Crear array de fechas para el período usando moment
+        const dates: string[] = [];
+        const currentDate = moment(startDate);
+        while (currentDate.isSameOrBefore(endDate, 'day')) {
+            dates.push(currentDate.format('YYYY-MM-DD'));
+            currentDate.add(1, 'day');
+        }
+        // Inicializar datos por estado
+        const chartData = {
+            labels: dates.map((date) => moment(date).format('YYYY-MM-DD')),
+            datasets: [
+                {
+                    label: 'Creados',
+                    data: dates.map(() => 0),
+                    borderColor: '#007bff',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.4,
+                },
+                {
+                    label: 'En Tránsito',
+                    data: dates.map(() => 0),
+                    borderColor: '#ffc107',
+                    backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                    tension: 0.4,
+                },
+                {
+                    label: 'Entregados',
+                    data: dates.map(() => 0),
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.4,
+                },
+                {
+                    label: 'Cancelados',
+                    data: dates.map(() => 0),
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.4,
+                },
+            ],
+        };
+
+        // Llenar datos basados en los resultados de la consulta
+        rows.forEach((row) => {
+            const dateIndex = dates.indexOf(row.date);
+            if (dateIndex !== -1) {
+                const state = row.state;
+                const count = row.count;
+
+                // Mapear estados a índices de datasets
+                switch (state) {
+                    case 1: // En espera (Creados)
+                        chartData.datasets[0].data[dateIndex] = count;
+                        break;
+                    case 2: // En tránsito
+                        chartData.datasets[1].data[dateIndex] = count;
+                        break;
+                    case 3: // Entregados
+                        chartData.datasets[2].data[dateIndex] = count;
+                        break;
+                    case 4: // Cancelados
+                        chartData.datasets[3].data[dateIndex] = count;
+                        break;
+                }
+            }
+        });
+
+        // Obtener estadísticas generales usando las fechas correspondientes a cada estado
+        let statsQuery = `
+            SELECT 
+                state,
+                COUNT(*) as total
+            FROM main_sends
+            WHERE (
+                (state = 1 AND DATE(create_datetime) BETWEEN ? AND ?) OR
+                (state = 2 AND transit_datetime IS NOT NULL AND DATE(transit_datetime) BETWEEN ? AND ?) OR
+                (state = 3 AND deliver_datetime IS NOT NULL AND DATE(deliver_datetime) BETWEEN ? AND ?) OR
+                (state = 4 AND DATE(create_datetime) BETWEEN ? AND ?)
+            )
+        `;
+
+        const statsParams: any[] = [
+            startDateStr,
+            endDateStr, // Para estado 1 (En espera)
+            startDateStr,
+            endDateStr, // Para estado 2 (En tránsito)
+            startDateStr,
+            endDateStr, // Para estado 3 (Entregado)
+            startDateStr,
+            endDateStr, // Para estado 4 (Cancelado)
+        ];
+
+        // Aplicar el mismo filtrado de usuario que en la query principal
+        if (user?.rol_id !== 1) {
+            // Usuario normal: solo sus envíos
+            statsQuery += ' AND user_id = ?';
+            statsParams.push(user?.id);
+        } else if (user_id) {
+            // Admin con filtro específico de usuario
+            const targetUserId = parseInt(user_id as string);
+            if (targetUserId && !isNaN(targetUserId)) {
+                statsQuery += ' AND user_id = ?';
+                statsParams.push(targetUserId);
+            }
+        }
+
+        statsQuery += ' GROUP BY state';
+
+        const [statsRows] = await db.execute<RowDataPacket[]>(statsQuery, statsParams);
+
+        const stats = {
+            created: 0,
+            inTransit: 0,
+            delivered: 0,
+            cancelled: 0,
+            total: 0,
+        };
+
+        statsRows.forEach((row) => {
+            const count = row.total;
+            stats.total += count;
+
+            switch (row.state) {
+                case 1:
+                    stats.created = count;
+                    break;
+                case 2:
+                    stats.inTransit = count;
+                    break;
+                case 3:
+                    stats.delivered = count;
+                    break;
+                case 4:
+                    stats.cancelled = count;
+                    break;
+            }
+        });
+        res.json({
+            code: 200,
+            data: {
+                chartData,
+                stats,
+                period: periodDays,
+                dateRange: {
+                    start: startDateStr,
+                    end: endDateStr,
+                },
+                filters: {
+                    user_id: user_id ? parseInt(user_id as string) : null,
+                    isAdmin: user?.rol_id === 1,
+                },
+            },
+            message: 'charts-data-retrieved',
+        });
+        return;
+    } catch (error) {
+        console.error('Error in charts-data endpoint:', error);
         res.json({
             code: 500,
             message: 'internal-server-error',

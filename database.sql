@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Servidor: localhost
--- Tiempo de generación: 15-09-2025 a las 21:00:19
+-- Tiempo de generación: 16-09-2025 a las 17:00:07
 -- Versión del servidor: 8.3.0
 -- Versión de PHP: 8.2.27
 
@@ -34,7 +34,8 @@ CREATE TABLE `main_drivers` (
 INSERT INTO `main_drivers` (`id`, `cifnif`, `name`) VALUES
 (1, '12345678', 'Juan cano'),
 (2, '123456789', 'Jose Pekerman'),
-(3, '98765432', 'Camilo Vargas');
+(3, '98765432', 'Camilo Vargas'),
+(4, '1234567890', 'Juan Pablo');
 
 -- --------------------------------------------------------
 
@@ -74,7 +75,8 @@ CREATE TABLE `main_routes` (
 --
 
 INSERT INTO `main_routes` (`id`, `vehicle_id`, `code`, `desc_route`) VALUES
-(1, NULL, 'COL001', 'De sur a norte');
+(1, 1, 'COL001', 'De sur a norte'),
+(2, 2, 'COL002', 'De norte a sur');
 
 -- --------------------------------------------------------
 
@@ -99,15 +101,6 @@ CREATE TABLE `main_sends` (
   `height` float DEFAULT NULL,
   `length` float DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
---
--- Volcado de datos para la tabla `main_sends`
---
-
-INSERT INTO `main_sends` (`id`, `user_id`, `unique_id`, `route_id`, `driver_id`, `reference`, `address`, `units`, `state`, `create_datetime`, `transit_datetime`, `deliver_datetime`, `width`, `height`, `length`) VALUES
-(1, 2, '12345678', NULL, NULL, 'TEST', 'Callee busquela con cra encuentrela', 1, 1, '2025-09-13 19:11:36', NULL, NULL, NULL, NULL, NULL),
-(14, 1, '1757886110943', NULL, NULL, 'saldnslad', 'Cll 30 # 30  - 50 Armenia', 1, 1, '2025-09-14 16:41:50', NULL, NULL, 10, 10, 10),
-(15, 2, '1757886190142', NULL, NULL, 'sadsdasd', 'Cll 30 # 50 - 30 Armenia', 1, 4, '2025-09-14 16:43:10', NULL, NULL, 10, 10, 10);
 
 -- --------------------------------------------------------
 
@@ -150,7 +143,7 @@ CREATE TABLE `main_vehicles` (
 
 INSERT INTO `main_vehicles` (`id`, `code`, `brand`, `capacity`) VALUES
 (1, '001', 'Turbo', 15),
-(2, '002', 'Chevrolet', 2);
+(2, '002', 'Chevrolet', 0);
 
 --
 -- Índices para tablas volcadas
@@ -206,7 +199,7 @@ ALTER TABLE `main_vehicles`
 -- AUTO_INCREMENT de la tabla `main_drivers`
 --
 ALTER TABLE `main_drivers`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT de la tabla `main_roles`
@@ -218,13 +211,13 @@ ALTER TABLE `main_roles`
 -- AUTO_INCREMENT de la tabla `main_routes`
 --
 ALTER TABLE `main_routes`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- AUTO_INCREMENT de la tabla `main_sends`
 --
 ALTER TABLE `main_sends`
-  MODIFY `id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+  MODIFY `id` int NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de la tabla `main_users`

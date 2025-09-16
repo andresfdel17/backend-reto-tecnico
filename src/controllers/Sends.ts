@@ -1,6 +1,33 @@
 import { Router, Request, Response } from 'express';
 import { getUserData, modifyDataRateLimit } from '@middlewares';
 export const Sends = Router();
+
+// Helper function para obtener datos del propietario del envío
+async function getOwnerData(userId: number): Promise<{ email: string; name: string } | null> {
+    try {
+        const result = await db.execute<RowDataPacket[]>('SELECT email, name FROM main_users WHERE id = ? LIMIT 1', [
+            userId,
+        ]);
+
+        // Verificar que result tenga la estructura correcta
+        if (!Array.isArray(result) || result.length < 1) {
+            return null;
+        }
+
+        const [userRows] = result;
+
+        if (Array.isArray(userRows) && userRows.length > 0 && userRows[0].email) {
+            return {
+                email: userRows[0].email,
+                name: userRows[0].name || 'Usuario',
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting owner data:', error);
+        return null;
+    }
+}
 //-- Importar tablas de conexion de bd
 import { db } from '@database';
 import { validateData } from '@util';
@@ -234,14 +261,17 @@ Sends.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, r
     };
 
     // Enviar notificación por socket al usuario propietario del envío
-    if (req.actualUser?.email) {
-        socketManager.emitToUser(req.actualUser.email, 'new-send-notification', {
-            message: 'new-send-notification',
-            unique_id: newSendData.unique_id,
-            username: req.actualUser.name || 'Usuario',
-            timestamp: new Date().toISOString(),
-            createdBy: req.actualUser.name || 'Usuario',
-        });
+    if (saveData.user_id) {
+        const ownerData = await getOwnerData(saveData.user_id);
+        if (ownerData) {
+            socketManager.emitToUser(ownerData.email, 'new-send-notification', {
+                message: 'new-send-notification',
+                unique_id: newSendData.unique_id,
+                username: ownerData.name,
+                timestamp: new Date().toISOString(),
+                createdBy: ownerData.name,
+            });
+        }
     }
 
     // Enviar actualización para tracking público (por unique_id) - envío creado
@@ -445,18 +475,13 @@ Sends.put('/update/:id', [getUserData, modifyDataRateLimit], async (req: Request
     const [updatedRows] = await db.execute<RowDataPacket[]>(checkQuery, [sendId]);
     const updatedSend = updatedRows[0];
 
-    // Obtener email del usuario propietario del envío
-    const ownerQuery = `SELECT email, name FROM main_users WHERE id = ?`;
-    const [ownerRows] = await db.execute<RowDataPacket[]>(ownerQuery, [updatedSend.user_id]);
-    const ownerEmail = ownerRows.length > 0 ? ownerRows[0].email : '';
-    const ownerName = ownerRows.length > 0 ? ownerRows[0].name : 'Usuario';
-
     // Enviar notificación al propietario del envío
-    if (ownerEmail) {
-        socketManager.emitToUser(ownerEmail, 'send-updated-notification', {
+    const ownerData = await getOwnerData(updatedSend.user_id);
+    if (ownerData) {
+        socketManager.emitToUser(ownerData.email, 'send-updated-notification', {
             newState: finalState,
             unique_id: updatedSend.unique_id,
-            username: ownerName,
+            username: ownerData.name,
             updatedBy: req.actualUser?.name || 'Usuario',
             timestamp: new Date().toISOString(),
         });

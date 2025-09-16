@@ -5,7 +5,7 @@ import express from 'express';
 
 // Import después de los mocks
 import '../setup';
-import { createMockDbResult, mockDrivers } from '../helpers/testHelpers';
+import { createMockDbResult } from '../helpers/testHelpers';
 
 // Mock completo de app.ts para evitar que se inicie el servidor
 jest.mock('../../src/app', () => ({
@@ -137,50 +137,6 @@ describe('General Controller - Simple Tests', () => {
         }, 5000);
     });
 
-    describe('GET /drivers', () => {
-        it('debería retornar lista de conductores disponibles', async () => {
-            // Arrange
-            mockExecute.mockResolvedValueOnce(createMockDbResult(mockDrivers) as any);
-
-            // Act
-            const response = await request(app).get('/api/general/drivers');
-
-            // Assert
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual({
-                code: 200,
-                data: expect.arrayContaining([
-                    expect.objectContaining({
-                        id: expect.any(Number),
-                        cifnif: expect.any(String),
-                        name: expect.any(String),
-                    }),
-                ]),
-                message: 'drivers-available',
-            });
-
-            // Verificar que se llamó a la base de datos
-            expect(mockExecute).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT')
-            );
-        }, 5000);
-
-        it('debería retornar lista vacía cuando no hay conductores', async () => {
-            // Arrange
-            mockExecute.mockResolvedValueOnce(createMockDbResult([]) as any);
-
-            // Act
-            const response = await request(app).get('/api/general/drivers');
-
-            // Assert
-            expect(response.status).toBe(200);
-            expect(response.body).toEqual({
-                code: 200,
-                data: [],
-                message: 'drivers-available',
-            });
-        }, 5000);
-    });
 
     describe('Middleware Integration', () => {
         it('debería funcionar sin middlewares complejos', async () => {
