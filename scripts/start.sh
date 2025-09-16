@@ -5,20 +5,63 @@ set -e
 
 echo "🚀 Iniciando proyecto con credenciales aleatorias..."
 
-# Verificar si existe .env.template, si no, crearlo desde .env local
-if [ ! -f ".env.template" ]; then
-    echo "📋 .env.template no existe, creándolo desde .env local..."
-    if [ -f ".env" ]; then
-        ./scripts/sync-env-template.sh true
+# Verificar si existe .env
+if [ ! -f ".env" ]; then
+    echo "📝 Creando archivo .env desde .env.example..."
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo "✅ Archivo .env creado desde .env.example"
+        echo "🔧 Configuración por defecto aplicada:"
+        echo "   - API: http://localhost:3000"
+        echo "   - MySQL: localhost:3307 (usuario: reto_user)"
+        echo "   - Frontend: http://localhost:3001"
     else
-        echo "❌ Error: No existe .env local para crear .env.template"
-        echo "   Asegúrate de tener tu archivo .env configurado primero"
-        exit 1
+        echo "❌ Error: .env.example no encontrado"
+        echo "   Creando .env con configuración por defecto..."
+        cat > .env << 'EOF'
+# Configuración de la aplicación
+NODE_ENV=development
+APP_NAME=NodeJS API
+PORT=3000
+EXTERNAL_PORT=3000
+APP_URL=http://localhost:3000
+FRONT_DOMAIN=http://localhost:3001
+
+# Configuración de base de datos MySQL (PARA DESARROLLO LOCAL)
+DB_HOST=localhost
+DB_PORT=3307
+DB_USER=reto_user
+DB_PASS=userpass123
+DB_NAME=reto_tecnico
+DB_ROOT_PASSWORD=rootpass123
+
+# JWT Secret (GENERAR UNO NUEVO EN PRODUCCIÓN)
+JWT_SECRET=your-super-secret-jwt-key-here-change-in-production-12345
+
+# Configuración de logging
+LOG_LEVEL=debug
+LOG_TO_FILE=true
+LOG_DIRECTORY=./logs
+LOG_MAX_SIZE=20m
+LOG_MAX_FILES=14d
+
+# Debug
+APP_DEBUG=true
+EOF
+        echo "✅ Archivo .env creado con configuración por defecto"
     fi
+else
+    echo "✅ Archivo .env encontrado"
 fi
 
-echo "📝 Usando tu .env local existente (NO se modifica)"
-echo "🔒 Solo se cambiarán las credenciales de BD en Docker"
+# Verificar si existe .env.template, si no, crearlo desde .env
+if [ ! -f ".env.template" ]; then
+    echo "📋 Creando .env.template desde .env..."
+    ./scripts/sync-env-template.sh true
+fi
+
+echo "📝 Usando archivo .env (las credenciales de BD en Docker están hardcodeadas)"
+echo "🔒 MySQL Docker usa credenciales fijas: reto_user/userpass123"
 
 echo ""
 echo "🐳 Iniciando servicios Docker..."

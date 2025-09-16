@@ -33,19 +33,19 @@ fi
 
 echo "✅ Contenedores están activos"
 
-# Verificar conexión a MySQL
+# Verificar conexión a MySQL (usar credenciales hardcodeadas de Docker)
 echo "🔍 Verificando conexión a MySQL..."
-if docker-compose exec -T mysql mysql -u"$DB_USER" -p"$DB_PASS" -e "SELECT 'Conexión exitosa' as status;" > /dev/null 2>&1; then
+if docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" -e "SELECT 'Conexión exitosa' as status;" > /dev/null 2>&1; then
     echo "✅ Conexión a MySQL exitosa"
 else
     echo "❌ Error: No se puede conectar a MySQL"
-    echo "   Verifica las credenciales en .env"
+    echo "   Verifica que los contenedores estén corriendo"
     exit 1
 fi
 
 # Verificar que la base de datos existe
 echo "🔍 Verificando base de datos reto_tecnico..."
-if docker-compose exec -T mysql mysql -u"$DB_USER" -p"$DB_PASS" -e "USE reto_tecnico; SELECT 'BD existe' as status;" > /dev/null 2>&1; then
+if docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" -e "USE reto_tecnico; SELECT 'BD existe' as status;" > /dev/null 2>&1; then
     echo "✅ Base de datos reto_tecnico existe"
 else
     echo "❌ Error: Base de datos reto_tecnico no existe"
@@ -54,7 +54,7 @@ fi
 
 # Verificar tablas
 echo "🔍 Verificando tablas..."
-TABLES=$(docker-compose exec -T mysql mysql -u"$DB_USER" -p"$DB_PASS" reto_tecnico -e "SHOW TABLES;" 2>/dev/null | tail -n +2)
+TABLES=$(docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" reto_tecnico -e "SHOW TABLES;" 2>/dev/null | tail -n +2)
 if [ -n "$TABLES" ]; then
     echo "✅ Tablas encontradas:"
     echo "$TABLES" | sed 's/^/   - /'
@@ -82,16 +82,16 @@ echo ""
 echo "🎉 Verificación completada"
 echo ""
 echo "📊 Información del entorno:"
-echo "   - Puerto API: $PORT"
-echo "   - Puerto MySQL: $DB_PORT"
+echo "   - Puerto API: ${PORT:-3000}"
+echo "   - Puerto MySQL: 3307"
 echo "   - Puerto phpMyAdmin: 8080"
-echo "   - Usuario BD: $DB_USER"
-echo "   - Base de datos: $DB_NAME"
+echo "   - Usuario BD: reto_user"
+echo "   - Base de datos: reto_tecnico"
 echo ""
 echo "🔗 URLs disponibles:"
-echo "   - API: http://localhost:$PORT"
+echo "   - API: http://localhost:${PORT:-3000}"
 echo "   - phpMyAdmin: http://localhost:8080"
-echo "   - MySQL: localhost:$DB_PORT"
+echo "   - MySQL: localhost:3307"
 echo ""
 echo "🛠️ Comandos útiles:"
 echo "   - Logs: yarn docker:logs"

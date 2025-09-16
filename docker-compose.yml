@@ -13,7 +13,7 @@ services:
       MYSQL_RANDOM_ROOT_PASSWORD: "no"
       MYSQL_ONETIME_PASSWORD: "no"
     ports:
-      - "${DB_PORT}:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./init-database.sql:/docker-entrypoint-initdb.d/01-init.sql
@@ -62,6 +62,7 @@ services:
   # phpMyAdmin para debugging de base de datos
   phpmyadmin:
     image: phpmyadmin/phpmyadmin:latest
+    platform: linux/amd64
     container_name: phpmyadmin
     restart: unless-stopped
     environment:
