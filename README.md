@@ -74,9 +74,80 @@ Los contenedores se pueden comunicar usando sus nombres:
 - Backend accesible como `backend` desde otros contenedores
 - MySQL accesible como `mysql` desde otros contenedores
 
+## 🧪 Testing
+
+El proyecto incluye un sistema completo de pruebas unitarias con Jest y Supertest.
+
+### Comandos de Testing
+
+```bash
+# Ejecutar todas las pruebas
+yarn test
+
+# Ejecutar pruebas con reporte de cobertura
+yarn test:coverage
+```
+
+### Cobertura Actual
+
+El proyecto mantiene una **cobertura del 35.2%** con tests que incluyen:
+
+- **Controllers**: Tests de endpoints con autenticación simulada
+  - ✅ Login (95.55% coverage)
+  - ✅ Users (50% coverage)
+  - ✅ Sends (15.29% coverage)
+  - ✅ General (42.85% coverage)
+
+- **Middlewares**: Tests de manejo de errores
+  - ✅ ErrorMiddleware (87.5% coverage)
+
+- **Utils**: Tests de construcción de queries dinámicas
+  - ✅ QueryBuilder (63.82% coverage)
+
+- **Schemas**: Validación de datos (100% coverage)
+  - ✅ loginSchemas
+  - ✅ sendSchemas
+  - ✅ routeSchemas
+
+### Características del Testing
+
+- **🔒 Tests Aislados**: Cada test es completamente independiente
+- **🗄️ Mocking de Base de Datos**: Sin conexiones reales a MySQL
+- **🚀 Ejecución Rápida**: Todos los tests corren en menos de 6 segundos
+- **🔐 Autenticación Simulada**: Tests con JWT y middlewares mockeados
+- **📊 Reportes Detallados**: Cobertura línea por línea con Jest
+- **⚡ Sin Cuelgues**: Tests optimizados para no quedarse ejecutando
+
+### Archivos de Testing
+
+```
+test/
+├── setup.ts              # Configuración global y mocks
+├── helpers/
+│   └── testHelpers.ts     # Datos mock y utilidades
+├── controllers/           # Tests de endpoints
+│   ├── Login.test.ts
+│   ├── Users.test.ts
+│   ├── Sends.test.ts
+│   └── General.test.ts
+├── middlewares/           # Tests de middlewares
+│   └── ErrorMiddleware.test.ts
+└── util/                  # Tests de utilidades
+    └── QueryBuilder.test.ts
+```
+
+### Datos Mock
+
+Los tests utilizan datos consistentes basados en `database.sql`:
+
+- **Usuarios**: `a@mail.com` (Admin) y `afd@mail.com` (User)
+- **Envíos**: Estados 1-4 (Creado, En tránsito, Entregado, Anulado)
+- **Rutas y Conductores**: Datos realistas para validaciones
+
 ## 📁 Estructura
 
 - `src/` - Código fuente de la API
+- `test/` - Suite completa de pruebas unitarias
 - `scripts/` - Scripts de automatización
 - `database.sql` - Estructura de base de datos
 - `docker-compose.yml` - Configuración de servicios
