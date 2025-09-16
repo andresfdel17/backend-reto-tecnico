@@ -244,6 +244,25 @@ Sends.post('/create', [getUserData, modifyDataRateLimit], async (req: Request, r
         });
     }
 
+    // Enviar actualización para tracking público (por unique_id) - envío creado
+    socketManager.emitToAll(`send-updated-${newSendData.unique_id}`, {
+        id: newSendData.id,
+        user_id: newSendData.user_id,
+        unique_id: newSendData.unique_id,
+        route_id: newSendData.route_id,
+        driver_id: newSendData.driver_id,
+        reference: newSendData.reference,
+        address: newSendData.address,
+        units: newSendData.units,
+        state: newSendData.state,
+        create_datetime: newSendData.create_datetime,
+        transit_datetime: null,
+        deliver_datetime: null,
+        width: newSendData.width,
+        height: newSendData.height,
+        length: newSendData.length,
+    });
+
     res.json({
         code: 200,
         text: 'send-created',
@@ -442,6 +461,25 @@ Sends.put('/update/:id', [getUserData, modifyDataRateLimit], async (req: Request
             timestamp: new Date().toISOString(),
         });
     }
+
+    // Enviar actualización para tracking público (por unique_id)
+    socketManager.emitToAll(`send-updated-${updatedSend.unique_id}`, {
+        id: updatedSend.id,
+        user_id: updatedSend.user_id,
+        unique_id: updatedSend.unique_id,
+        route_id: updatedSend.route_id,
+        driver_id: updatedSend.driver_id,
+        reference: updatedSend.reference,
+        address: updatedSend.address,
+        units: updatedSend.units,
+        state: updatedSend.state,
+        create_datetime: updatedSend.create_datetime,
+        transit_datetime: updatedSend.transit_datetime,
+        deliver_datetime: updatedSend.deliver_datetime,
+        width: updatedSend.width,
+        height: updatedSend.height,
+        length: updatedSend.length,
+    });
 
     res.json({
         code: 200,

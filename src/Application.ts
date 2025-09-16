@@ -12,7 +12,7 @@ import path from 'node:path';
 import { PORT, NODE_ENV, FRONT_DOMAIN } from '@util';
 import { errorHandler, generalRateLimit } from '@middlewares';
 import { Logger } from '@lib';
-import { General, Login, Notifications, Sends, Users } from '@controllers';
+import { General, Login, Notifications, Sends, Users, Drivers, Home } from '@controllers';
 
 export const app = express();
 
@@ -161,6 +161,8 @@ app.use(route('notifications'), Notifications);
 app.use(route('sends'), Sends);
 app.use(route('users'), Users);
 app.use(route('general'), General);
+app.use(route('drivers'), Drivers);
+app.use(route('home'), Home);
 
 app.get('/api/', (_req, res) => {
     res.json({
