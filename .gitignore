@@ -36,6 +36,3 @@ junit.xml
 
 # Custom files
 src/uploadslogs/*.log
-
-# Documentation (local development only)
-docs/

@@ -63,4 +63,15 @@ echo "   - Password BD: ${DB_USER_PASSWORD}"
 echo "   - Root Password: ${DB_ROOT_PASSWORD}"
 echo "   - JWT Secret: ${JWT_SECRET}"
 echo ""
-echo "🚀 Ahora puedes ejecutar: docker-compose up -d"
+echo "🚀 Ahora puedes ejecutar:"
+
+# Cargar utilidades de Docker Compose para mostrar el comando correcto
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/docker-utils.sh"
+
+DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd 2>/dev/null)
+if [ $? -eq 0 ]; then
+    echo "   $DOCKER_COMPOSE_CMD up -d"
+else
+    echo "   docker compose up -d  # o docker-compose up -d"
+fi

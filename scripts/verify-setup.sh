@@ -2,6 +2,10 @@
 
 # Script para verificar que la configuración de Docker está funcionando correctamente
 
+# Cargar utilidades de Docker Compose
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/docker-utils.sh"
+
 echo "🔍 Verificando configuración del backend..."
 
 # Verificar que el archivo .env existe
@@ -17,15 +21,20 @@ source .env
 echo "✅ Archivo .env encontrado"
 
 # Verificar que Docker está corriendo
-if ! docker info > /dev/null 2>&1; then
-    echo "❌ Error: Docker no está corriendo"
+if ! verify_docker_running; then
     exit 1
 fi
 
 echo "✅ Docker está corriendo"
 
+# Obtener comando de Docker Compose
+DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
+if [ $? -ne 0 ]; then
+    exit 1
+fi
+
 # Verificar que los contenedores están activos
-if ! docker-compose ps | grep -q "Up"; then
+if ! $DOCKER_COMPOSE_CMD ps | grep -q "Up"; then
     echo "❌ Error: Los contenedores no están corriendo"
     echo "   Ejecuta: yarn setup-backend"
     exit 1
@@ -35,7 +44,7 @@ echo "✅ Contenedores están activos"
 
 # Verificar conexión a MySQL (usar credenciales hardcodeadas de Docker)
 echo "🔍 Verificando conexión a MySQL..."
-if docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" -e "SELECT 'Conexión exitosa' as status;" > /dev/null 2>&1; then
+if $DOCKER_COMPOSE_CMD exec -T mysql mysql -u"reto_user" -p"userpass123" -e "SELECT 'Conexión exitosa' as status;" > /dev/null 2>&1; then
     echo "✅ Conexión a MySQL exitosa"
 else
     echo "❌ Error: No se puede conectar a MySQL"
@@ -45,7 +54,7 @@ fi
 
 # Verificar que la base de datos existe
 echo "🔍 Verificando base de datos reto_tecnico..."
-if docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" -e "USE reto_tecnico; SELECT 'BD existe' as status;" > /dev/null 2>&1; then
+if $DOCKER_COMPOSE_CMD exec -T mysql mysql -u"reto_user" -p"userpass123" -e "USE reto_tecnico; SELECT 'BD existe' as status;" > /dev/null 2>&1; then
     echo "✅ Base de datos reto_tecnico existe"
 else
     echo "❌ Error: Base de datos reto_tecnico no existe"
@@ -54,7 +63,7 @@ fi
 
 # Verificar tablas
 echo "🔍 Verificando tablas..."
-TABLES=$(docker-compose exec -T mysql mysql -u"reto_user" -p"userpass123" reto_tecnico -e "SHOW TABLES;" 2>/dev/null | tail -n +2)
+TABLES=$($DOCKER_COMPOSE_CMD exec -T mysql mysql -u"reto_user" -p"userpass123" reto_tecnico -e "SHOW TABLES;" 2>/dev/null | tail -n +2)
 if [ -n "$TABLES" ]; then
     echo "✅ Tablas encontradas:"
     echo "$TABLES" | sed 's/^/   - /'

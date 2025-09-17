@@ -3,6 +3,10 @@
 # Script de inicio completo con credenciales aleatorias
 set -e
 
+# Cargar utilidades de Docker Compose
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/docker-utils.sh"
+
 echo "🚀 Iniciando proyecto con credenciales aleatorias..."
 
 # Verificar si existe .env
@@ -67,19 +71,20 @@ echo ""
 echo "🐳 Iniciando servicios Docker..."
 
 # Verificar si Docker está corriendo
-if ! docker info > /dev/null 2>&1; then
-    echo "❌ Error: Docker no está corriendo"
-    echo "   Por favor, inicia Docker Desktop y vuelve a intentar"
+if ! verify_docker_running; then
     exit 1
 fi
 
+# Mostrar información sobre Docker Compose
+show_docker_compose_info
+
 # Limpiar contenedores anteriores y volúmenes si existen
 echo "🧹 Limpiando contenedores anteriores y volúmenes..."
-docker-compose down -v 2>/dev/null || true
+docker_compose_run down -v 2>/dev/null || true
 
 # Levantar servicios (siempre reconstruir sin caché)
 echo "⬆️  Levantando servicios (reconstruyendo imagen sin caché)..."
-docker-compose up -d --build --force-recreate
+docker_compose_run up -d --build --force-recreate
 
 echo ""
 echo "⏳ Esperando a que los servicios estén listos..."
@@ -88,10 +93,11 @@ echo "⏳ Esperando a que los servicios estén listos..."
 echo "   - Esperando MySQL..."
 timeout=60
 counter=0
-until docker-compose exec -T mysql mysqladmin ping -h"localhost" --silent 2>/dev/null; do
+DOCKER_COMPOSE_CMD=$(get_docker_compose_cmd)
+until $DOCKER_COMPOSE_CMD exec -T mysql mysqladmin ping -h"localhost" --silent 2>/dev/null; do
     if [ $counter -eq $timeout ]; then
         echo "❌ Timeout esperando MySQL"
-        docker-compose logs mysql
+        $DOCKER_COMPOSE_CMD logs mysql
         exit 1
     fi
     sleep 2
@@ -119,14 +125,14 @@ echo ""
 echo "🎉 ¡Servicios iniciados correctamente!"
 echo ""
 echo "📊 Estado de los servicios:"
-docker-compose ps
+$DOCKER_COMPOSE_CMD ps
 echo ""
 echo "🔗 URLs disponibles:"
 echo "   - API: http://localhost:${PORT:-3000}"
 echo "   - MySQL: localhost:${DB_PORT:-3306}"
 echo ""
 echo "🗄️  Verificar base de datos:"
-echo "   docker-compose exec mysql mysql -u\$(grep DB_USER .env | cut -d'=' -f2) -p\$(grep DB_PASS .env | cut -d'=' -f2) reto_tecnico -e 'SHOW TABLES;'"
+echo "   $DOCKER_COMPOSE_CMD exec mysql mysql -u\$(grep DB_USER .env | cut -d'=' -f2) -p\$(grep DB_PASS .env | cut -d'=' -f2) reto_tecnico -e 'SHOW TABLES;'"
 echo ""
 echo "📝 Ver logs:"
-echo "   docker-compose logs -f"
+echo "   $DOCKER_COMPOSE_CMD logs -f"

@@ -25,11 +25,11 @@
     "verify-backend": "./scripts/verify-setup.sh",
     "sync-env": "./scripts/sync-env-template.sh",
     "docker:start": "./scripts/start.sh",
-    "docker:stop": "docker-compose down -v",
-    "docker:restart": "docker-compose down -v && docker-compose up -d --build --force-recreate",
-    "docker:rebuild": "docker-compose build --no-cache && docker-compose up -d --force-recreate",
-    "docker:logs": "docker-compose logs -f",
-    "docker:clean": "docker-compose down -v && docker system prune -f"
+    "docker:stop": "./scripts/docker-cmd.sh down -v",
+    "docker:restart": "./scripts/docker-cmd.sh down -v && ./scripts/docker-cmd.sh up -d --build --force-recreate",
+    "docker:rebuild": "./scripts/docker-cmd.sh build --no-cache && ./scripts/docker-cmd.sh up -d --force-recreate",
+    "docker:logs": "./scripts/docker-cmd.sh logs -f",
+    "docker:clean": "./scripts/docker-cmd.sh down -v && docker system prune -f"
   },
   "license": "MIT",
   "private": true,
